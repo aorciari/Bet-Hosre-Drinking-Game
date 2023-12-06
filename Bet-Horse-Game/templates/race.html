@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horse Race in Progress</title>
+</head>
+<body>
+    <h1>Horse Race in Progress</h1>
+    <p>Number of Players: {{ num_players }}</p>
+    <p>Horses in the race:</p>
+    {% for horse in horse_names %}
+        <p>{{ horse }}</p>
+    {% endfor %}
+
+    <!-- Add a form for player bets -->
+    <form action="/race_results" method="post">
+    <input type="hidden" name="numPlayers" value="{{ num_players }}">
+    {% for i in range(num_players) %}
+        <input type="hidden" name="horse_names" value="{{ horse_names[i] }}">
+        <label for="player{{ i + 1 }}">Enter name for Player {{ i + 1 }}:</label>
+        <input type="text" name="player{{ i + 1 }}" required>
+        <label for="horseBet{{ i + 1 }}">Choose a horse to bet on:</label>
+        <select name="horseBet{{ i + 1 }}" required>
+            {% for horse in horse_names %}
+                <option value="{{ horse }}">{{ horse }}</option>
+            {% endfor %}
+        </select>
+        <label for="drinkBet{{ i + 1 }}">Number of Drinks to Bet:</label>
+        <input type="number" name="drinkBet{{ i + 1 }}" required min="1" max="10"><br>
+    {% endfor %}
+    <input type="submit" value="Submit Bets">
+</form>
+
+</body>
+</html>

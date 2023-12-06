@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Race Results</title>
+    <style>
+        /* Add some simple CSS styling for better presentation */
+        .progress-bar {
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+            padding: 5px;
+        }
+
+        .horse-progress {
+            display: inline-block;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Race Results</h1>
+
+    <h2>Race Progress:</h2>
+    <div class="progress-bar">
+        {% for horse_progress in horse_progresses %}
+            <div class="horse-progress" style="width: {{ horse_progress }}%;">{{ horse_progress }}%</div>
+        {% endfor %}
+    </div>
+
+    <h2>Betting Results:</h2>
+    {% for player, bet_info in player_bets.items() %}
+        <p>
+            {{ player }}:
+            {% if bet_info['horse'] == winning_horse %}
+                Wins the bet on {{ winning_horse }} and gets {{ bet_info['drinks'] * 2 }} drinks!
+            {% else %}
+                Loses the bet and takes {{ bet_info['drinks'] }} drinks. Better luck next time!
+            {% endif %}
+        </p>
+    {% endfor %}
+</body>
+</html>
