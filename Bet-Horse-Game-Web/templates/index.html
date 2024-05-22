@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horse Race Game</title>
+    <style>
+        .race-track {
+            width: 100%;
+            border-bottom: 2px solid #000;
+            margin-bottom: 20px;
+            position: relative;
+            height: 30px; /* Ensure there's enough height for the line to show */
+        }
+
+        .horse {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 2;
+            transition: left 0.5s ease; /* Smooth transition for the horse movement */
+        }
+
+        .finish-line {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #000;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <h1>Horse Race Game</h1>
+
+    <div id="playerInputs"></div>
+    <button onclick="addPlayer()">Add Player</button>
+    <button id="startRaceBtn">Start Race</button>
+    <button id="resetRaceBtn" onclick="resetRace()">Reset Race</button>
+    <div id="raceTrack"></div>
+
+    <script>
+        let playerCount = 0;
+        let playerBets = [];
+        const horses = {{ horses|tojson }};
+
+        function addPlayer() {
+            playerCount++;
+            const div = document.createElement('div');
+            div.innerHTML = `
+                <label>Player ${playerCount}:</label>
+                <input type="text" id="player${playerCount}Name" placeholder="Name" />
+                <select id="player${playerCount}Horse">
+                    ${horses.map(horse => `<option value="${horse}">${horse}</option>`).join('')}
+                </select>
+                <input type="number" id="player${playerCount}Drinks" placeholder="Drinks" min="1" />
+            `;
+            document.getElementById('playerInputs').appendChild(div);
+        }
+
+        document.getElementById('startRaceBtn').addEventListener('click', () => {
+            playerBets = [];
+            for (let i = 1; i <= playerCount; i++) {
+                const name = document.getElementById(`player${i}Name`).value;
+                const horse = document.getElementById(`player${i}Horse`).value;
+                const drinks = document.getElementById(`player${i}Drinks`).value;
+                playerBets.push({ name, horse, drinks });
+            }
+
+            fetch('/start-race', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ playerBets }),
+            }).then(response => {
+                if (response.ok) {
+                    console.log('Race started!');
+                    updateRaceStatus();
+                }
+            });
+        });
+
+        function updateRaceStatus() {
+            fetch('/race-status').then(response => response.json()).then(data => {
+                const raceTrack = document.getElementById('raceTrack');
+                raceTrack.innerHTML = '';
+                Object.keys(data.horse_positions).forEach((horse, index) => {
+                    const progress = data.horse_positions[horse];
+                    const horseDiv = document.createElement('div');
+                    horseDiv.className = 'race-track';
+                    horseDiv.innerHTML = `
+                        <div class="finish-line"></div>
+                        <span class="horse" style="left: ${Math.min(progress * 5, 95)}%;">${horse} 🐎</span>
+                    `;
+                    raceTrack.appendChild(horseDiv);
+                });
+
+                if (data.is_race_on) {
+                    setTimeout(updateRaceStatus, 1000);
+                } else if (data.winner) {
+                    alert(`Race finished! Winner is ${data.winner}`);
+                    displayResults(data.results);
+                }
+            });
+        }
+
+        function displayResults(results) {
+            let resultsDiv = document.getElementById('results');
+            if (!resultsDiv) {
+                resultsDiv = document.createElement('div');
+                resultsDiv.id = 'results';
+                document.body.appendChild(resultsDiv);
+            } else {
+                resultsDiv.innerHTML = '';
+            }
+
+            results.forEach(result => {
+                const p = document.createElement('p');
+                p.textContent = result;
+                resultsDiv.appendChild(p);
+            });
+        }
+
+        function resetRace() {
+            fetch('/reset-race', { method: 'POST' })
+            .then(response => {
+                if (response.ok) {
+                    console.log('Race reset successfully!');
+                    document.getElementById('raceTrack').innerHTML = '';
+                    const resultsDiv = document.getElementById('results');
+                    if (resultsDiv) {
+                        resultsDiv.remove();
+                    }
+                    document.getElementById('playerInputs').innerHTML = '';
+                    playerCount = 0;
+                    playerBets = [];
+                    addPlayer(); // Re-add the initial player form
+                }
+            });
+        }
+
+        // Initialize with one player input form
+        window.onload = addPlayer;
+    </script>
+</body>
+</html>

@@ -57,7 +57,7 @@ def race(num_players):
 
     # Simulate the race
     while max(horse_positions.values()) < 16:
-        time.sleep(1.5)  # Add a delay for visualization
+        time.sleep(1.3)  # Add a delay for visualization
         print("\nRace Progress:")
         for horse in horse_names:
             progress = '#' * horse_positions[horse]

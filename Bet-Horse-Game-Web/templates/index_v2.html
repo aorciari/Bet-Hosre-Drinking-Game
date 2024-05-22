@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horse Race Game</title>
+</head>
+<body>
+    <h1>Horse Race Game</h1>
+
+    <div id="playerInputs"></div>
+    <button onclick="addPlayer()">Add Player</button>
+    <button id="startRaceBtn">Start Race</button>
+    <div id="raceTrack"></div>
+
+    <script>
+        let playerCount = 0;
+        const playerBets = [];
+        const horses = {{ horses|tojson }};
+
+        function addPlayer() {
+            playerCount++;
+            const div = document.createElement('div');
+            div.innerHTML = `
+                <label>Player ${playerCount}:</label>
+                <input type="text" id="player${playerCount}Name" placeholder="Name" />
+                <select id="player${playerCount}Horse">
+                    ${horses.map(horse => `<option value="${horse}">${horse}</option>`).join('')}
+                </select>
+                <input type="number" id="player${playerCount}Drinks" placeholder="Drinks" min="1" />
+            `;
+            document.getElementById('playerInputs').appendChild(div);
+        }
+
+        document.getElementById('startRaceBtn').addEventListener('click', () => {
+            for (let i = 1; i <= playerCount; i++) {
+                const name = document.getElementById(`player${i}Name`).value;
+                const horse = document.getElementById(`player${i}Horse`).value;
+                const drinks = document.getElementById(`player${i}Drinks`).value;
+                playerBets.push({ name, horse, drinks });
+            }
+
+            fetch('/start-race', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ playerBets }),
+            }).then(response => {
+                if (response.ok) {
+                    console.log('Race started!');
+                    updateRaceStatus();
+                }
+            });
+        });
+
+        function updateRaceStatus() {
+            fetch('/race-status').then(response => response.json()).then(data => {
+                const raceTrack = document.getElementById('raceTrack');
+                raceTrack.innerHTML = '';  // Clear the race track for update
+                Object.keys(data.horse_positions).forEach(horse => {
+                    const progress = data.horse_positions[horse];
+                    const div = document.createElement('div');
+                    div.textContent = `${horse}: ${'#'.repeat(progress)}`;
+                    raceTrack.appendChild(div);
+                });
+
+                if (data.is_race_on) {
+                    setTimeout(updateRaceStatus, 1000);  // Update the status every second
+                } else if (data.winner) {
+                    alert(`Race finished! Winner is ${data.winner}`);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

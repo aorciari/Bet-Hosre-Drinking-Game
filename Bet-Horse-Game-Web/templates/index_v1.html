@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horse Race Game</title>
+    <style>
+        /* Add your styles here */
+    </style>
+</head>
+<body>
+    <h1>Horse Race Game</h1>
+    <button id="startRaceBtn">Start Race</button>
+    <div id="raceTrack"></div>
+
+    <script>
+        document.getElementById('startRaceBtn').addEventListener('click', startRace);
+
+        function startRace() {
+            fetch('/start-race', {
+                method: 'POST'
+            }).then(response => {
+                if (response.ok) {
+                    console.log('Race started!');
+                    updateRaceStatus();
+                }
+            });
+        }
+
+        function updateRaceStatus() {
+            fetch('/race-status').then(response => response.json()).then(data => {
+                const raceTrack = document.getElementById('raceTrack');
+                raceTrack.innerHTML = '';  // Clear the race track for update
+                Object.keys(data.horse_positions).forEach(horse => {
+                    const progress = data.horse_positions[horse];
+                    const div = document.createElement('div');
+                    div.textContent = `${horse}: ${'#'.repeat(progress)}`;
+                    raceTrack.appendChild(div);
+                });
+
+                if (data.is_race_on) {
+                    setTimeout(updateRaceStatus, 1000);  // Update the status every second
+                } else if (data.winner) {
+                    alert(`Race finished! Winner is ${data.winner}`);
+                }
+            });
+        }
+    </script>
+</body>
+</html>
