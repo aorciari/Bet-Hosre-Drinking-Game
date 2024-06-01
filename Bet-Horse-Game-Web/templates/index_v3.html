@@ -34,17 +34,6 @@
         }
     </style>
 </head>
-
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-VHPYGELP98"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-VHPYGELP98');
-</script>
-
 <body>
     <h1>Horse Race Game</h1>
     <p id="bug_message">****Still in Development there are some bugs****</p>
@@ -77,14 +66,7 @@
         };
 
         function fetchHorses() {
-            const numHorses = document.getElementById('numHorses').value;
-            return fetch(`/set-horses`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ numHorses })
-            })
+            return fetch('/race-status')
                 .then(response => response.json())
                 .then(data => {
                     horses = data.horse_names;
@@ -96,7 +78,27 @@
         }
 
         document.getElementById('numHorses').addEventListener('change', () => {
-            fetchHorses();
+            const numHorses = document.getElementById('numHorses').value;
+            fetch('/set-horses', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ numHorses })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                horses = data.horse_names;
+                updatePlayerHorseOptions();
+            })
+            .catch(error => {
+                console.error('Error setting horses:', error);
+            });
         });
 
         document.getElementById('startRaceBtn').addEventListener('click', () => {
@@ -205,7 +207,6 @@
         }
 
         function resetRace() {
-            const numHorses = document.getElementById('numHorses').value;  // Get the current number of horses
             fetch('/reset-race', { method: 'POST' })
             .then(response => {
                 if (!response.ok) {
@@ -223,12 +224,12 @@
                 document.getElementById('playerInputs').innerHTML = '';
                 playerCount = 0;
                 playerBets = [];
-                fetch('/set-horses', {  // Reset horse names with the current number of horses
+                fetch('/set-horses', { // Reset horse names to default four horses
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ numHorses })
+                    body: JSON.stringify({ numHorses: 4 })
                 }).then(response => {
                     if (!response.ok) {
                         throw new Error('Network response was not ok');

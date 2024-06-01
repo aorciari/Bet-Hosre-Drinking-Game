@@ -27,6 +27,6 @@ jobs:
         username: ${{ secrets.USERNAME }}
         key: ${{ secrets.SSH_KEY }}
         script: |
-          cd /path/to/application
+          cd /home/ubuntu/Bet-Hosre-Drinking-Game
           git pull
           sudo systemctl restart gunicorn
